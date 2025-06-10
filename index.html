@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Анализ цифрового поведения</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f5f5f5;
+    }
+    .container {
+      max-width: 600px;
+      margin: auto;
+      padding: 20px;
+      background: white;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    h2 {
+      color: #333;
+    }
+    button {
+      padding: 12px 20px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    .hidden {
+      display: none;
+    }
+    input, select, textarea {
+      width: 100%;
+      padding: 10px;
+      margin: 8px 0 16px;
+      box-sizing: border-box;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    
+    <!-- Вкладка 1 -->
+    <div id="page1">
+      <h2>Добро пожаловать в наш эксперимент!</h2>
+      <p>Мы проводим исследование для анализа и проверки жизнеспособности нашего алгоритма.<br>
+      Ваши личные данные не будут собираться — мы просто тестируем техническую часть решения.<br>
+      Благодарим вас за участие!<br><br>
+      Участвуя в эксперименте, вы подтверждаете своё согласие на участие в нём.</p>
+      <button onclick="nextPage(2)">Я согласен</button>
+    </div>
+
+    <!-- Вкладка 2 -->
+    <div id="page2" class="hidden">
+      <h2>Сделай свой пост</h2>
+      <p>Смоделируйте 1 пост, как в социальных сетях. Далее будет использован один из 20 постов из датасетов:</p>
+      <ul>
+        <li>HateXplain-master</li>
+        <li>jigsaw-toxic-comment-classification-challenge</li>
+        <li>liar_data</li>
+      </ul>
+      <textarea id="userPost" rows="5" placeholder="Напишите ваш пост..."></textarea>
+      <button onclick="nextPage(3)">Следующий шаг</button>
+    </div>
+
+    <!-- Вкладка 3 -->
+    <div id="page3" class="hidden">
+      <h2>Анкетирование</h2>
+      <label for="gender">Пол:</label>
+      <select id="gender">
+        <option value="">Выберите</option>
+        <option value="Мужской">Мужской</option>
+        <option value="Женский">Женский</option>
+        <option value="Другое">Другое</option>
+      </select>
+
+      <label for="age">Возраст:</label>
+      <input type="number" id="age" placeholder="Введите возраст">
+
+      <button onclick="submitForm()">Завершить</button>
+    </div>
+
+    <!-- Вкладка 4 -->
+    <div id="page4" class="hidden">
+      <h2>Спасибо за участие!</h2>
+      <p>Ваши ответы были успешно зафиксированы. Мы ценим ваш вклад в развитие цифровой безопасности!</p>
+    </div>
+  </div>
+
+  <script>
+    function nextPage(pageNumber) {
+      showPage(pageNumber);
+    }
+
+    function showPage(pageNumber) {
+      for (let i = 1; i <= 4; i++) {
+        document.getElementById('page' + i).classList.add('hidden');
+      }
+      document.getElementById('page' + pageNumber).classList.remove('hidden');
+    }
+
+    function submitForm() {
+      const userPost = document.getElementById('userPost').value.trim();
+      const gender = document.getElementById('gender').value;
+      const age = document.getElementById('age').value.trim();
+
+      if (!userPost || !gender || !age) {
+        alert("Пожалуйста, заполните все поля.");
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('post', userPost);
+      formData.append('gender', gender);
+      formData.append('age', age);
+
+      fetch("https://script.google.com/macros/s/AKfycbz04AzI1np9vTqMjomfs3mIUH6pltCD8Yc57_HojYBH9uC40Dvzp18fPuTcx3aNp1zbXw/exec", {
+        method: "POST",
+        body: formData
+      })
+      .then(response => response.text())
+      .then(result => {
+        console.log("Ответ от сервера:", result);
+        showPage(4);
+      })
+      .catch(error => {
+        console.error("Ошибка при отправке:", error);
+        alert("Произошла ошибка при отправке. Попробуйте снова.");
+      });
+    }
+  </script>
+</body>
+</html>
