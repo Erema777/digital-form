@@ -99,10 +99,6 @@
 
   <script>
     function nextPage(pageNumber) {
-      showPage(pageNumber);
-    }
-
-    function showPage(pageNumber) {
       for (let i = 1; i <= 4; i++) {
         document.getElementById('page' + i).classList.add('hidden');
       }
@@ -110,32 +106,34 @@
     }
 
     function submitForm() {
-      const userPost = document.getElementById('userPost').value.trim();
       const gender = document.getElementById('gender').value;
-      const age = document.getElementById('age').value.trim();
+      const age = document.getElementById('age').value;
+      const userPost = document.getElementById('userPost').value;
 
-      if (!userPost || !gender || !age) {
-        alert("Пожалуйста, заполните все поля.");
-        return;
-      }
-
-      const formData = new FormData();
-      formData.append('post', userPost);
-      formData.append('gender', gender);
-      formData.append('age', age);
+      const data = {
+        gender,
+        age,
+        post: userPost
+      };
 
       fetch("https://script.google.com/macros/s/AKfycbz04AzI1np9vTqMjomfs3mIUH6pltCD8Yc57_HojYBH9uC40Dvzp18fPuTcx3aNp1zbXw/exec", {
         method: "POST",
-        body: formData
+        body: JSON.stringify(data),
+        headers: {
+          "Content-Type": "application/json"
+        }
       })
-      .then(response => response.text())
+      .then(response => {
+        if (!response.ok) throw new Error("Ошибка при отправке");
+        return response.text();
+      })
       .then(result => {
-        console.log("Ответ от сервера:", result);
-        showPage(4);
+        console.log("Успешно отправлено:", result);
+        nextPage(4);
       })
       .catch(error => {
-        console.error("Ошибка при отправке:", error);
         alert("Произошла ошибка при отправке. Попробуйте снова.");
+        console.error(error);
       });
     }
   </script>
