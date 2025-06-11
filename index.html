@@ -105,37 +105,40 @@
       document.getElementById('page' + pageNumber).classList.remove('hidden');
     }
 
-    function submitForm() {
-      const gender = document.getElementById('gender').value;
-      const age = document.getElementById('age').value;
-      const userPost = document.getElementById('userPost').value;
+function submitForm() {
+  const userPost = document.getElementById('userPost').value.trim();
+  const gender = document.getElementById('gender').value;
+  const age = document.getElementById('age').value.trim();
 
-      const data = {
-        gender,
-        age,
-        post: userPost
-      };
+  if (!userPost || !gender || !age) {
+    alert("Пожалуйста, заполните все поля.");
+    return;
+  }
 
-      fetch("https://script.google.com/macros/s/AKfycbz04AzI1np9vTqMjomfs3mIUH6pltCD8Yc57_HojYBH9uC40Dvzp18fPuTcx3aNp1zbXw/exec", {
-        method: "POST",
-        body: JSON.stringify(data),
-        headers: {
-          "Content-Type": "application/json"
-        }
-      })
-      .then(response => {
-        if (!response.ok) throw new Error("Ошибка при отправке");
-        return response.text();
-      })
-      .then(result => {
-        console.log("Успешно отправлено:", result);
-        nextPage(4);
-      })
-      .catch(error => {
-        alert("Произошла ошибка при отправке. Попробуйте снова.");
-        console.error(error);
-      });
+  const data = {
+    post: userPost,
+    gender: gender,
+    age: age
+  };
+
+  fetch("https://script.google.com/macros/s/AKfycbz04AzI1np9vTqMjomfs3mIUH6pltCD8Yc57_HojYBH9uC40Dvzp18fPuTcx3aNp1zbXw/exec", {
+    method: "POST",
+    body: JSON.stringify(data),
+    headers: {
+      "Content-Type": "application/json"
     }
+  })
+  .then(response => response.text())
+  .then(result => {
+    console.log("Ответ от сервера:", result);
+    showPage(4);
+  })
+  .catch(error => {
+    console.error("Ошибка при отправке:", error);
+    alert("Произошла ошибка при отправке. Попробуйте снова.");
+  });
+}
+
   </script>
 </body>
 </html>
