@@ -115,18 +115,14 @@ function submitForm() {
     return;
   }
 
-  const data = {
-    post: userPost,
-    gender: gender,
-    age: age
-  };
+  const formData = new FormData();
+  formData.append('post', userPost);
+  formData.append('gender', gender);
+  formData.append('age', age);
 
   fetch("https://script.google.com/macros/s/AKfycbz04AzI1np9vTqMjomfs3mIUH6pltCD8Yc57_HojYBH9uC40Dvzp18fPuTcx3aNp1zbXw/exec", {
     method: "POST",
-    body: JSON.stringify(data),
-    headers: {
-      "Content-Type": "application/json"
-    }
+    body: formData
   })
   .then(response => response.text())
   .then(result => {
@@ -138,6 +134,7 @@ function submitForm() {
     alert("Произошла ошибка при отправке. Попробуйте снова.");
   });
 }
+
 
   </script>
 </body>
