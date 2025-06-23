@@ -1,141 +1,140 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Анализ цифрового поведения</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Социальный анализ угроз</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 0;
-      background: #f5f5f5;
-    }
-    .container {
-      max-width: 600px;
-      margin: auto;
-      padding: 20px;
-      background: white;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-    }
-    h2 {
-      color: #333;
-    }
-    button {
-      padding: 12px 20px;
-      background-color: #4CAF50;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      font-size: 16px;
-      cursor: pointer;
-    }
-    button:hover {
-      background-color: #45a049;
-    }
-    .hidden {
-      display: none;
-    }
-    input, select, textarea {
-      width: 100%;
-      padding: 10px;
-      margin: 8px 0 16px;
-      box-sizing: border-box;
-    }
+    body { font-family: sans-serif; padding: 20px; background: #f4f6f8; }
+    .post { background: #fff; padding: 15px; margin-bottom: 15px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.08); }
+    .actions button { margin-right: 10px; cursor: pointer; }
+    .analysis { font-size: 0.9em; color: #555; margin-top: 5px; }
+    textarea { width: 100%; padding: 10px; margin-bottom: 10px; font-size: 1em; border-radius: 5px; border: 1px solid #ccc; }
+    button.submit { background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 5px; }
+    canvas { max-width: 600px; margin-top: 30px; background: #fff; padding: 20px; border-radius: 10px; }
   </style>
 </head>
 <body>
-  <div class="container">
-    
-    <!-- Вкладка 1 -->
-    <div id="page1">
-      <h2>Добро пожаловать в наш эксперимент!</h2>
-      <p>Мы проводим исследование для анализа и проверки жизнеспособности нашего алгоритма.<br>
-      Ваши личные данные не будут собираться — мы просто тестируем техническую часть решения.<br>
-      Благодарим вас за участие!<br><br>
-      Участвуя в эксперименте, вы подтверждаете своё согласие на участие в нём.</p>
-      <button onclick="nextPage(2)">Я согласен</button>
-    </div>
 
-    <!-- Вкладка 2 -->
-    <div id="page2" class="hidden">
-      <h2>Сделай свой пост</h2>
-      <p>Смоделируйте 1 пост, как в социальных сетях. Далее будет использован один из 20 постов из датасетов:</p>
-      <ul>
-        <li>HateXplain-master</li>
-        <li>jigsaw-toxic-comment-classification-challenge</li>
-        <li>liar_data</li>
-      </ul>
-      <textarea id="userPost" rows="5" placeholder="Напишите ваш пост..."></textarea>
-      <button onclick="nextPage(3)">Следующий шаг</button>
-    </div>
+  <h1>Лента публикаций</h1>
 
-    <!-- Вкладка 3 -->
-    <div id="page3" class="hidden">
-      <h2>Анкетирование</h2>
-      <label for="gender">Пол:</label>
-      <select id="gender">
-        <option value="">Выберите</option>
-        <option value="Мужской">Мужской</option>
-        <option value="Женский">Женский</option>
-        <option value="Другое">Другое</option>
-      </select>
+  <h3>➕ Добавить новый пост</h3>
+  <textarea id="postText" rows="4" placeholder="Введите текст для анализа..."></textarea>
+  <button class="submit" onclick="submitPost()">Анализировать и опубликовать</button>
 
-      <label for="age">Возраст:</label>
-      <input type="number" id="age" placeholder="Введите возраст">
+  <hr />
+  <h2>📊 Статистика угроз</h2>
+  <canvas id="threatChart"></canvas>
+  <hr />
 
-      <button onclick="submitForm()">Завершить</button>
-    </div>
-
-    <!-- Вкладка 4 -->
-    <div id="page4" class="hidden">
-      <h2>Спасибо за участие!</h2>
-      <p>Ваши ответы были успешно зафиксированы. Мы ценим ваш вклад в развитие цифровой безопасности!</p>
-    </div>
-  </div>
+  <div id="posts"></div>
 
   <script>
-    function nextPage(pageNumber) {
-      for (let i = 1; i <= 4; i++) {
-        document.getElementById('page' + i).classList.add('hidden');
-      }
-      document.getElementById('page' + pageNumber).classList.remove('hidden');
+    let stats = { toxic: 0, fake: 0, hate: 0, total: 0 };
+
+    async function fetchPosts() {
+      const res = await fetch("/api/posts");
+      const data = await res.json();
+      const container = document.getElementById("posts");
+      container.innerHTML = "";
+      stats = { toxic: 0, fake: 0, hate: 0, total: data.length };
+
+      data.forEach((post, index) => {
+        const div = document.createElement("div");
+        div.className = "post";
+        const pid = "post-" + index;
+
+        const isToxic = Object.entries(post.toxicity || {}).some(([label, score]) => score > 0.5 && label !== 'non-toxic');
+        const isFake = post.fake_news.label.toLowerCase().includes("fake") && post.fake_news.score > 0.5;
+        const isHate = post.hate_speech.label.toLowerCase().includes("hate") && post.hate_speech.score > 0.5;
+
+        if (isToxic) stats.toxic++;
+        if (isFake) stats.fake++;
+        if (isHate) stats.hate++;
+
+        div.innerHTML = `
+          <p>${post.text}</p>
+          <div class="analysis">
+            <b>Toxicity:</b> ${JSON.stringify(post.toxicity)}<br>
+            <b>Fake news:</b> ${post.fake_news.label} (${post.fake_news.score.toFixed(2)})<br>
+            <b>Hate speech:</b> ${post.hate_speech.label} (${post.hate_speech.score.toFixed(2)})
+          </div>
+          <div class="actions">
+            <button onclick="interact('${pid}', 'like')">👍</button>
+            <button onclick="interact('${pid}', 'dislike')">👎</button>
+            <button onclick="interact('${pid}', 'repost')">💬 Репост</button>
+            <button onclick="interact('${pid}', 'hide')">🙈 Скрыть</button>
+          </div>
+        `;
+
+        div.dataset.postId = pid;
+        container.appendChild(div);
+      });
+
+      renderChart();
     }
 
-function submitForm() {
-  const userPost = document.getElementById('userPost').value.trim();
-  const gender = document.getElementById('gender').value;
-  const age = document.getElementById('age').value.trim();
+    async function interact(pid, action) {
+      await fetch("/api/interact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ post_id: pid, action })
+      });
+    }
 
-  if (!userPost || !gender || !age) {
-    alert("Пожалуйста, заполните все поля.");
-    return;
-  }
+    async function submitPost() {
+      const text = document.getElementById("postText").value;
+      if (!text.trim()) return alert("Введите текст!");
 
-  const formData = new FormData();
-  formData.append('post', userPost);
-  formData.append('gender', gender);
-  formData.append('age', age);
+      const analyze = await fetch("/api/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text })
+      });
 
-  fetch("https://script.google.com/macros/s/AKfycbxLdZb2UntFD-u0uAkxAms2V2Gej7lv3VfBmbnvebabMb8TSzB9Cu6G0lE5zNOYkay2tA/exec", {
-    method: "POST",
-    body: formData
-  })
-  .then(response => response.text())
-  .then(result => {
-    console.log("Ответ от сервера:", result);
-    showPage(4);
-  })
-  .catch(error => {
-    console.error("Ошибка при отправке:", error);
-    alert("Произошла ошибка при отправке. Попробуйте снова.");
-  });
-}
+      const result = await analyze.json();
 
+      await fetch("/api/save_post", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          text,
+          toxicity: result.toxicity,
+          fake_news: result.fake_news,
+          hate_speech: result.hate_speech
+        })
+      });
 
+      document.getElementById("postText").value = "";
+      fetchPosts();
+    }
+
+    function renderChart() {
+      const ctx = document.getElementById('threatChart').getContext('2d');
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['Toxic', 'Fake', 'Hate'],
+          datasets: [{
+            label: 'Обнаружено угроз',
+            data: [stats.toxic, stats.fake, stats.hate],
+            backgroundColor: ['#ff4d4f', '#fa8c16', '#722ed1']
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: { stepSize: 1 }
+            }
+          }
+        }
+      });
+    }
+
+    fetchPosts();
   </script>
 </body>
 </html>
