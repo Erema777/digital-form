@@ -67,8 +67,16 @@ class InteractionIn(BaseModel):
     action: str
 
 print("Загрузка моделей...")
+token = os.getenv("HUGGINGFACE_TOKEN")
+
 toxicity_model = pipeline("text-classification", model="unitary/toxic-bert", top_k=None)
-fake_news_model = pipeline("text-classification", model="microsoft/roberta-base-openai-detector")
+
+fake_news_model = pipeline(
+    "text-classification",
+    model="microsoft/roberta-base-openai-detector",
+    use_auth_token=token
+)
+
 hate_speech_model = pipeline("text-classification", model="cardiffnlp/twitter-roberta-hate")
 print("Модели загружены ✅")
 
