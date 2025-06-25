@@ -7,14 +7,16 @@ from typing import List, Optional
 import sqlite3
 import uuid
 from transformers import pipeline
-import os
-token = os.getenv("HUGGINGFACE_TOKEN")
 from datetime import datetime
 import os
 import csv
 
+# Получаем токен из переменных окружения
+token = os.getenv("HUGGINGFACE_TOKEN")
+
 app = FastAPI()
 
+# Разрешаем CORS для любого источника
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -23,9 +25,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Монтируем папку со static файлами (если она есть)
 if os.path.exists("static"):
     app.mount("/", StaticFiles(directory="static", html=True), name="static")
 
+# Инициализация базы данных
 conn = sqlite3.connect("social_behavior.db", check_same_thread=False)
 cursor = conn.cursor()
 
@@ -52,6 +56,7 @@ CREATE TABLE IF NOT EXISTS interactions (
 """)
 conn.commit()
 
+# Pydantic модели
 class PostIn(BaseModel):
     text: str
     toxicity: Optional[dict]
@@ -68,10 +73,14 @@ class InteractionIn(BaseModel):
     post_id: str
     action: str
 
+# Загрузка моделей HuggingFace
 print("Загрузка моделей...")
-token = os.getenv("HUGGINGFACE_TOKEN")
-
-toxicity_model = pipeline("text-classification", model="unitary/toxic-bert", top_k=None)
+toxicity_model = pipeline(
+    "text-classification",
+    model="unitary/toxic-bert",
+    top_k=None,
+    use_auth_token=token
+)
 
 fake_news_model = pipeline(
     "text-classification",
@@ -79,9 +88,14 @@ fake_news_model = pipeline(
     use_auth_token=token
 )
 
-hate_speech_model = pipeline("text-classification", model="cardiffnlp/twitter-roberta-hate")
+hate_speech_model = pipeline(
+    "text-classification",
+    model="cardiffnlp/twitter-roberta-hate",
+    use_auth_token=token
+)
 print("Модели загружены ✅")
 
+# Функция анализа текста
 def analyze_text_with_models(text: str):
     tox_results = toxicity_model(text)[0]
     toxicity = {r["label"].lower(): r["score"] for r in tox_results}
@@ -98,6 +112,7 @@ def analyze_text_with_models(text: str):
         "hate_speech": hate
     }
 
+# Функция экспорта данных в CSV
 def export_csv():
     with sqlite3.connect("social_behavior.db") as conn:
         c = conn.cursor()
@@ -113,13 +128,16 @@ def export_csv():
             writer.writerow(["id", "post_id", "action", "timestamp"])
             writer.writerows(c.fetchall())
 
+# Экспорт данных при запуске
 export_csv()
 
+# Анализ текста
 @app.post("/api/analyze")
 async def analyze_text(item: PostIn):
     result = analyze_text_with_models(item.text)
     return result
 
+# Сохранение поста
 @app.post("/api/save_post")
 async def save_post(post: PostIn):
     pid = str(uuid.uuid4())
@@ -141,6 +159,7 @@ async def save_post(post: PostIn):
     export_csv()
     return {"status": "saved", "id": pid}
 
+# Получение всех постов
 @app.get("/api/posts", response_model=List[PostOut])
 async def get_posts():
     cursor.execute("SELECT text, toxicity, fake_label, fake_score, hate_label, hate_score FROM posts ORDER BY rowid DESC")
@@ -155,6 +174,7 @@ async def get_posts():
         })
     return posts
 
+# Запись взаимодействия
 @app.post("/api/interact")
 async def record_interaction(interaction: InteractionIn):
     iid = str(uuid.uuid4())
@@ -167,6 +187,7 @@ async def record_interaction(interaction: InteractionIn):
     export_csv()
     return {"status": "logged", "interaction_id": iid}
 
+# Скачать CSV файлы
 @app.get("/api/export/posts")
 def download_posts():
     return FileResponse("posts_export.csv", media_type="text/csv", filename="posts_export.csv")
