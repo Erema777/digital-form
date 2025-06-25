@@ -3,4 +3,4 @@ uvicorn
 pydantic
 transformers
 torch
-python-multipart
+sqlite3  # встроен в Python
