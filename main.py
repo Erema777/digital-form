@@ -7,6 +7,8 @@ from typing import List, Optional
 import sqlite3
 import uuid
 from transformers import pipeline
+import os
+token = os.getenv("HUGGINGFACE_TOKEN")
 from datetime import datetime
 import os
 import csv
