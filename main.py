@@ -84,7 +84,7 @@ toxicity_model = pipeline(
 
 fake_news_model = pipeline(
     "text-classification",
-    model="microsoft/roberta-base-openai-detector",
+    model="mrm8488/bert-tiny-finetuned-fake-news",
     use_auth_token=token
 )
 
