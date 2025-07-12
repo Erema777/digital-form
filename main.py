@@ -14,6 +14,9 @@ import csv
 # Получаем токен из переменных окружения
 token = os.getenv("HUGGINGFACE_TOKEN")
 
+# Добавь эту проверку сразу после получения токена
+assert token is not None, "❌ HUGGINGFACE_TOKEN не установлен!"
+
 app = FastAPI()
 
 # Разрешаем CORS для любого источника
