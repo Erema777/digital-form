@@ -84,8 +84,8 @@ toxicity_model = pipeline(
 
 fake_news_model = pipeline(
     "text-classification",
-    model="michiyasunaga/BERTFakeNewsDetector",
-    use_auth_token=token
+    model="microsoft/deberta-v3-small-mnli",
+    use_auth_token=token  # ← если токен есть
 )
 
 hate_speech_model = pipeline(
