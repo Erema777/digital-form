@@ -1,20 +1,23 @@
-# Dockerfile
-FROM python:3.10-slim
+# Use the official Node.js 18 image as the base
+FROM node:18
 
-# Создаём рабочую директорию
+# Set the working directory inside the container
 WORKDIR /app
 
-# Копируем зависимости отдельно для кеширования
-COPY requirements.txt .
+# Copy package.json and package-lock.json
+COPY package*.json ./
 
-# Установка зависимостей
-RUN pip install --no-cache-dir -r requirements.txt
+# Install dependencies
+RUN npm install
 
-# Копируем всё приложение
+# Copy the rest of the application code
 COPY . .
 
-# Открываем порт (если нужно)
-EXPOSE 8080
+# Build the application (optional, depending on your framework)
+# RUN npm run build
 
-# Запуск приложения через uvicorn
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]
+# Expose the port the app runs on
+EXPOSE 3000
+
+# Define the command to run the app
+CMD ["npm", "start"]
