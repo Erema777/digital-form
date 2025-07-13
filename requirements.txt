@@ -3,4 +3,4 @@ uvicorn
 pydantic
 transformers
 python-multipart
-torch
+torch==2.1.0
