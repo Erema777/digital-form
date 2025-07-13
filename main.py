@@ -87,7 +87,7 @@ toxicity_model = pipeline(
 
 fake_news_model = pipeline(
     "text-classification",
-   model="ml6team/bert-base-uncased-finetuned-fake-news"
+    model="microsoft/deberta-v3-small-mnli"
 )
 
 hate_speech_model = pipeline(
@@ -99,12 +99,23 @@ print("Модели загружены ✅")
 
 # Функция анализа текста
 def analyze_text_with_models(text: str):
+    # Токсичность
     tox_results = toxicity_model(text)[0]
     toxicity = {r["label"].lower(): r["score"] for r in tox_results}
 
-    fake_res = fake_news_model(text)[0]
-    fake = {"label": fake_res["label"], "score": fake_res["score"]}
+    # Фейк-ньюс через модель NLI
+    fake_raw = fake_news_model(text, truncation=True)[0]
+    fake_label = fake_raw["label"]
+    fake_score = fake_raw["score"]
 
+    if fake_label == "LABEL_0":
+        fake = {"label": "fake", "score": fake_score}
+    elif fake_label == "LABEL_2":
+        fake = {"label": "real", "score": fake_score}
+    else:
+        fake = {"label": "neutral", "score": fake_score}
+
+    # Хейт-спич
     hate_res = hate_speech_model(text)[0]
     hate = {"label": hate_res["label"], "score": hate_res["score"]}
 
@@ -113,6 +124,7 @@ def analyze_text_with_models(text: str):
         "fake_news": fake,
         "hate_speech": hate
     }
+
 
 # Функция экспорта данных в CSV
 def export_csv():
