@@ -87,7 +87,7 @@ toxicity_model = pipeline(
 
 fake_news_model = pipeline(
     "text-classification",
-    model="michaelpsheehan/fake-news-detection"
+   model="ml6team/bert-base-uncased-finetuned-fake-news"
 )
 
 hate_speech_model = pipeline(
