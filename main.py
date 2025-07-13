@@ -209,3 +209,8 @@ def download_posts():
 @app.get("/api/export/interactions")
 def download_interactions():
     return FileResponse("interactions_export.csv", media_type="text/csv", filename="interactions_export.csv")
+
+@app.get("/")
+async def root():
+    return {"message": "Digital Form API is running!"}
+
