@@ -1,0 +1,13 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.db
+*.csv
+.git/
+.venv/
+.env
+*.zip
+*.tar.gz
+*.bak
+*.log
