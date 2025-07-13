@@ -1,23 +1,14 @@
-# Use the official Node.js 18 image as the base
-FROM node:18
+FROM python:3.10
 
-# Set the working directory inside the container
 WORKDIR /app
 
-# Copy package.json and package-lock.json
-COPY package*.json ./
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Install dependencies
-RUN npm install
-
-# Copy the rest of the application code
 COPY . .
 
-# Build the application (optional, depending on your framework)
-# RUN npm run build
+ENV PORT=7860
 
-# Expose the port the app runs on
-EXPOSE 3000
+EXPOSE 7860
 
-# Define the command to run the app
-CMD ["npm", "start"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "7860"]
